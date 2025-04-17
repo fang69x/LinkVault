@@ -4,7 +4,7 @@ const bookmarkSchema= new mongoose.Schema({
         type:String ,
         required:true,
     },
-    URL:{
+    url:{
         type:String ,
         required:true,
         match: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/

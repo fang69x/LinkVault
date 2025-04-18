@@ -1,5 +1,5 @@
 import { Bookmark } from "../models/bookmark.model.js";
-
+import { searchBookmarksService } from "../services/bookmarkService.js";
 //Handling specific errors
 const handleErrors = (error, res) => {
     if (error.name === 'ValidationError') {
@@ -35,7 +35,9 @@ export const createBookmark=async(req,res)=>{
 
 export const getBookmarks=async(req,res)=>{
     try {
-        const bookmarks=await Bookmark.find({user:req.user._id}).sort({createdAt:-1});
+        const {page=1,limit=10}=req.query;
+        // pagination support (10)
+        const bookmarks=await Bookmark.find({user:req.user._id}).sort({createdAt:-1}).limit(limit*1).skip((page-1)*limit);
         res.status(200).json(bookmarks);
     } catch (error) {
         handleErrors(error,res);
@@ -99,3 +101,14 @@ export const deleteBookmark=async(req,res)=>{
         handleErrors(error,res);
     }
 }
+
+//search bookmarks
+
+export const searchBookmarks = async (req, res) => {
+    try {
+      const response = await searchBookmarksService(req);
+      res.status(200).json(response);
+    } catch (error) {
+      handleErrors(error, res);
+    }
+  };

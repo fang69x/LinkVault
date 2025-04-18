@@ -34,7 +34,7 @@ try {
     if(!publicId){
         return null;
     }
-    const result =await cloudinary.uploader.destry(publicId);
+    const result =await cloudinary.uploader.destroy(publicId);
     return result;
 } catch (error) {
     throw new Error(`Error deleting from Cloudinary:${error.message}`); 

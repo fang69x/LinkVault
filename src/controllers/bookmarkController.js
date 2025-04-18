@@ -78,7 +78,7 @@ export const updateBookmark=async(req,res)=>{
         return res.status(404).json({ message: "Bookmark not found or unauthorized" });
     }
     res.status(200).json({
-        updateBookmark,
+        updatedBookmark,
     })
     } catch (error) {
         handleErrors(error,res);

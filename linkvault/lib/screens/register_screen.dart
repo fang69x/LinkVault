@@ -35,7 +35,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    
+
     try {
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
@@ -43,7 +43,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         maxHeight: 512,
         imageQuality: 75,
       );
-      
+
       if (image != null) {
         setState(() {
           _avatarFile = File(image.path);
@@ -70,9 +70,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         );
         return;
       }
-      
+
       final notifier = ref.read(authNotifierProvider.notifier);
-      
+
       try {
         await notifier.register(
           _nameController.text.trim(),
@@ -95,7 +95,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Account'),
@@ -209,3 +209,45 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           _obscureConfirmPassword
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: FormValidators.passwordValidator,
+                    textInputAction: TextInputAction.done,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: authState.isLoading ? null : _register,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: authState.isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Register'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => context.push('/login'),
+                    child: const Text('Already have an account? Log in'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

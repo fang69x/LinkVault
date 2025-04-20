@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF6200EE);
@@ -11,37 +12,31 @@ class AppTheme {
   static const Color dividerColor = Color(0xFFE0E0E0);
 
   // Typography
-  static const TextTheme textTheme = TextTheme(
-    displayLarge: TextStyle(
-      fontFamily: 'Poppins',
+  static TextTheme textTheme = TextTheme(
+    displayLarge: GoogleFonts.poppins(
       fontWeight: FontWeight.bold,
       fontSize: 28,
       color: textPrimaryColor,
     ),
-    displayMedium: TextStyle(
-      fontFamily: 'Poppins',
+    displayMedium: GoogleFonts.poppins(
       fontWeight: FontWeight.bold,
       fontSize: 24,
       color: textPrimaryColor,
     ),
-    displaySmall: TextStyle(
-      fontFamily: 'Poppins',
+    displaySmall: GoogleFonts.poppins(
       fontWeight: FontWeight.bold,
       fontSize: 20,
       color: textPrimaryColor,
     ),
-    bodyLarge: TextStyle(
-      fontFamily: 'Poppins',
+    bodyLarge: GoogleFonts.poppins(
       fontSize: 16,
       color: textPrimaryColor,
     ),
-    bodyMedium: TextStyle(
-      fontFamily: 'Poppins',
+    bodyMedium: GoogleFonts.poppins(
       fontSize: 14,
       color: textPrimaryColor,
     ),
-    bodySmall: TextStyle(
-      fontFamily: 'Poppins',
+    bodySmall: GoogleFonts.poppins(
       fontSize: 12,
       color: textSecondaryColor,
     ),
@@ -99,8 +94,7 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        textStyle: const TextStyle(
-          fontFamily: 'Poppins',
+        textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.w600,
         ),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -112,8 +106,7 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: primaryColor,
-        textStyle: const TextStyle(
-          fontFamily: 'Poppins',
+        textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -173,8 +166,7 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        textStyle: const TextStyle(
-          fontFamily: 'Poppins',
+        textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.w600,
         ),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -186,8 +178,7 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: accentColor,
-        textStyle: const TextStyle(
-          fontFamily: 'Poppins',
+        textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.w600,
         ),
       ),

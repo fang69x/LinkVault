@@ -37,7 +37,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => const SplashScreen(),
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/login',
@@ -47,10 +47,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
-      // GoRoute(
-      //   path: '/home',
-      //   builder: (context, state) => const HomeScreen(),
-      // ),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const HomeScreen(),
+      ),
       // GoRoute(
       //   path: '/search',
       //   builder: (context, state) => const SearchScreen(),

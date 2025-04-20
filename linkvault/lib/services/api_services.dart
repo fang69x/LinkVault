@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/constants.dart';
+import 'dart:html' as html;
 
 class ApiException implements Exception {
   final String message;
@@ -94,30 +96,54 @@ class ApiServices {
   }
 
 //post with multipart (for image upload)
-  Future<dynamic> postMultipart(String endpoint, Map<String, String> fields,
-      String filePath, String fileField) async {
-    final token = await getToken();
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse(ApiConstants.baseUrl + endpoint),
-    );
+  Future<Map<String, dynamic>> postMultipart(
+    String endpoint,
+    Map<String, String> fields,
+    String? avatarPath,
+    String fileFieldName,
+  ) async {
+    final uri = Uri.parse(ApiConstants.baseUrl + endpoint);
+    final request = http.MultipartRequest('POST', uri);
 
-    // Add auth header
-    if (token != null) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-    // Add text fields
     request.fields.addAll(fields);
 
-    // Add file if provided
-    if (filePath.isNotEmpty) {
-      request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+    try {
+      if (kIsWeb) {
+        final file = await _pickWebFile();
+        if (file == null) throw ApiException('No file selected.');
+
+        final fileBytes = await _readFileBytes(file);
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            fileFieldName,
+            fileBytes,
+            filename: file.name,
+          ),
+        );
+      } else if (avatarPath != null && avatarPath.isNotEmpty) {
+        // Mobile: Use provided file path
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fileFieldName,
+            avatarPath,
+          ),
+        );
+      }
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(responseBody);
+      } else {
+        throw ApiException(
+          'Upload failed (${response.statusCode})',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ApiException('File upload error: ${e.toString()}');
     }
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-
-    return _handleResponse(response);
   }
 
   // PUT request
@@ -140,4 +166,33 @@ class ApiServices {
     );
     return _handleResponse(response);
   }
+}
+
+Future<html.File?> _pickWebFile() async {
+  final completer = Completer<html.File?>();
+  final input = html.FileUploadInputElement();
+  input.accept = 'image/*'; // or customize as needed
+  input.click();
+
+  input.onChange.listen((event) {
+    if (input.files!.isNotEmpty) {
+      completer.complete(input.files!.first);
+    } else {
+      completer.complete(null); // User cancelled
+    }
+  });
+
+  return completer.future;
+}
+
+Future<Uint8List> _readFileBytes(html.File file) async {
+  final reader = html.FileReader();
+  final completer = Completer<Uint8List>();
+
+  reader.readAsArrayBuffer(file);
+  reader.onLoadEnd.listen((_) {
+    completer.complete(reader.result as Uint8List);
+  });
+
+  return completer.future;
 }

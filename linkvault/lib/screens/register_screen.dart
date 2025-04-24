@@ -78,7 +78,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           _nameController.text.trim(),
           _emailController.text.trim(),
           _passwordController.text,
-          _avatarFile?.path,
+          avatarPath: _avatarFile?.path,
         );
       } catch (e) {
         if (!mounted) return;

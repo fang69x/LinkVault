@@ -44,24 +44,18 @@ final authServiceProvider = Provider<AuthService>((ref) {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
+  final _controller = StreamController<AuthState>.broadcast();
 
   AuthNotifier(this._authService) : super(AuthState.initial());
 
-  final _controller = StreamController<AuthState>.broadcast();
-
-  // Expose the stream so GoRouterRefreshStream can use it
+  // Expose the stream
   Stream<AuthState> get stream => _controller.stream;
 
-  // Emit state changes into the stream
-  void _emit() {
-    if (!_controller.isClosed) _controller.add(state);
-  }
-
-  // Override state setter to also notify listeners via stream
+  // Update state and notify stream
   @override
   set state(AuthState value) {
     super.state = value;
-    _emit();
+    _controller.add(value);
   }
 
   Future<void> checkAuthStatus() async {

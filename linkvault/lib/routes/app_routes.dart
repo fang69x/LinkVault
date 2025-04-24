@@ -73,8 +73,3 @@ class GoRouterRefreshStream extends ChangeNotifier {
     super.dispose();
   }
 }
-
-// Auth service provider
-final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService();
-});

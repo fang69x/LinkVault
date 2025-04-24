@@ -5,6 +5,15 @@ import '../models/user_model.dart';
 class AuthService {
   final ApiServices _apiService = ApiServices();
 
+  Future<User> getCurrentUser() async {
+    try {
+      final response = await _apiService.get('/api/auth/me');
+      return User.fromJson(response['user']);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // User registration with optional avatar
   Future<User> register(String name, String email, String password,
       {String? avatarPath}) async {

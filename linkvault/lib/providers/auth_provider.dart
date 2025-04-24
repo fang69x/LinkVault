@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:linkvault/models/user_model.dart';
 import 'package:linkvault/services/auth_services.dart';
 
-// Auth state
 class AuthState {
   final bool isAuthenticated;
   final User? user;
@@ -16,14 +16,12 @@ class AuthState {
     this.error,
   });
 
-  factory AuthState.initial() {
-    return AuthState(
-      isAuthenticated: false,
-      user: null,
-      isLoading: false,
-      error: null,
-    );
-  }
+  factory AuthState.initial() => AuthState(
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+        error: null,
+      );
 
   AuthState copyWith({
     bool? isAuthenticated,
@@ -44,30 +42,51 @@ final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService();
 });
 
-// auth state notifier
-
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
+
   AuthNotifier(this._authService) : super(AuthState.initial());
 
-  // check if user is already logged in
+  final _controller = StreamController<AuthState>.broadcast();
+
+  // Expose the stream so GoRouterRefreshStream can use it
+  Stream<AuthState> get stream => _controller.stream;
+
+  // Emit state changes into the stream
+  void _emit() {
+    if (!_controller.isClosed) _controller.add(state);
+  }
+
+  // Override state setter to also notify listeners via stream
+  @override
+  set state(AuthState value) {
+    super.state = value;
+    _emit();
+  }
+
   Future<void> checkAuthStatus() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final isLoggedIn = await _authService.isLoggedIn();
-      state = state.copyWith(
-        isAuthenticated: isLoggedIn,
-        isLoading: false,
-      );
+      if (isLoggedIn) {
+        final user = await _authService.getCurrentUser();
+        state = state.copyWith(
+          isAuthenticated: true,
+          user: user,
+          isLoading: false,
+        );
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
       );
+      await logout(); // optional: force logout on error
     }
   }
 
-  // login user
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -86,13 +105,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  //register user
   Future<void> register(String name, String email, String password,
       {String? avatarPath}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final user = await _authService.register(name, email, password,
-          avatarPath: avatarPath);
+      final user = await _authService.register(
+        name,
+        email,
+        password,
+        avatarPath: avatarPath,
+      );
       state = state.copyWith(
         isAuthenticated: true,
         user: user,
@@ -106,7 +128,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // Logout user
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     try {
@@ -118,6 +139,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         error: e.toString(),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _controller.close(); // close stream on cleanup
+    super.dispose();
   }
 }
 

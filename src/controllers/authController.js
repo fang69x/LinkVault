@@ -73,7 +73,24 @@ return res.status(400).json({
 }
 };
 
-
+export const getCurrentUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar?.url || null
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching user", error: error.message });
+    }
+};
 
 // Login User
 export const loginUser=async(req,res)=>{

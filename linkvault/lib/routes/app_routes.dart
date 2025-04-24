@@ -15,7 +15,6 @@ import 'package:linkvault/services/auth_services.dart';
 // Auth state provider to determine if user is logged in
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authNotifierProvider);
-  final authNotifier = ref.watch(authNotifierProvider.notifier);
 
   return GoRouter(
     initialLocation: '/',
@@ -38,6 +37,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
+      // Don't redirect while loading
       if (authState.isLoading) return null;
 
       final isLoggedIn = authState.isAuthenticated;
@@ -45,17 +45,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isRegisterRoute = state.matchedLocation == '/register';
       final isSplashRoute = state.matchedLocation == '/';
 
+      // If not logged in and not on auth or splash routes, go to login
       if (!isLoggedIn && !isLoginRoute && !isRegisterRoute && !isSplashRoute) {
         return '/login';
       }
 
+      // If logged in and on auth or splash routes, go to home
       if (isLoggedIn && (isLoginRoute || isRegisterRoute || isSplashRoute)) {
         return '/home';
       }
 
       return null;
     },
-    refreshListenable: GoRouterRefreshStream(authNotifier.stream),
+    refreshListenable: GoRouterRefreshStream(
+      ref.watch(authNotifierProvider.notifier).stream,
+    ),
   );
 });
 

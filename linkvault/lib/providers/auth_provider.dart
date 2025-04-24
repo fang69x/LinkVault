@@ -48,7 +48,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._authService) : super(AuthState.initial());
 
-  // Expose the stream
   Stream<AuthState> get stream => _controller.stream;
 
   // Update state and notify stream
@@ -61,8 +60,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> checkAuthStatus() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final isLoggedIn = await _authService.isLoggedIn();
-      if (isLoggedIn) {
+      final tokenValid = await _authService.verifyToken();
+
+      if (tokenValid) {
         final user = await _authService.getCurrentUser();
         state = state.copyWith(
           isAuthenticated: true,
@@ -70,6 +70,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false,
         );
       } else {
+        await logout();
         state = state.copyWith(isLoading: false);
       }
     } catch (e) {
@@ -77,7 +78,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         error: e.toString(),
       );
-      await logout(); // optional: force logout on error
+      await logout();
     }
   }
 

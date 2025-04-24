@@ -12,13 +12,9 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  bool _hasRedirected = false; // 🛡️ prevent multiple redirects
-
   @override
   void initState() {
     super.initState();
-
-    // 🔁 Start checking auth once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authNotifierProvider.notifier).checkAuthStatus();
     });
@@ -26,23 +22,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authNotifierProvider);
-
-    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-      if (_hasRedirected || next.isLoading) return;
-
-      _hasRedirected = true;
-
-      Future.microtask(() {
-        final router = GoRouter.of(context);
-        if (next.isAuthenticated) {
-          router.go('/home');
-        } else {
-          router.go('/login');
-        }
-      });
-    });
-
     return Scaffold(
       backgroundColor: AppTheme.primaryColor,
       body: Center(
@@ -81,15 +60,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             const SizedBox(height: 48),
             // Loading indicator
-            if (authState.isLoading)
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
-            else
-              const Text(
-                'Checking login status...',
-                style: TextStyle(color: Colors.white70),
-              ),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
           ],
         ),
       ),

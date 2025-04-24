@@ -65,4 +65,15 @@ class AuthService {
   Future<void> logout() async {
     await _apiService.clearToken();
   }
+
+  Future<bool> verifyToken() async {
+    try {
+      final token = await _apiService.getToken();
+      if (token == null) return false;
+      await _apiService.get('/api/auth/validate-token'); // Add backend endpoint
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

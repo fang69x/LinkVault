@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:linkvault/providers/auth_provider.dart';
+
 import 'package:linkvault/services/connectivity_services.dart';
 import 'package:linkvault/utils/theme.dart';
 import 'package:linkvault/routes/app_routes.dart';
@@ -11,19 +11,7 @@ void main() async {
   // Initialize services if needed
   await ConnectivityService.initialize();
 
-  runApp(
-    ProviderScope(
-      child: Consumer(
-        builder: (context, ref, child) {
-          // Check auth status on app start
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(authNotifierProvider.notifier).checkAuthStatus();
-          });
-          return const MyApp();
-        },
-      ),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {

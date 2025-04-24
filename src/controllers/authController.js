@@ -91,7 +91,15 @@ export const getCurrentUser = async (req, res) => {
         res.status(500).json({ message: "Error fetching user", error: error.message });
     }
 };
-
+export const validateToken = async (req, res) => {
+    try {
+      // Middleware already validated token
+      res.status(200).json({ valid: true });
+    } catch (error) {
+      console.error("Token validation error:", error);
+      res.status(500).json({ message: "Error validating token", error: error.message });
+    }
+  };
 // Login User
 export const loginUser=async(req,res)=>{
     try {

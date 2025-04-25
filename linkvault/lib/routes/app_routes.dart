@@ -37,16 +37,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      // Only redirect if auth check is complete (not loading)
+      // Always allow splash screen to show first
+      final isSplashRoute = state.matchedLocation == '/';
+      if (isSplashRoute) return null;
+
+      // Only redirect if auth check is complete
       if (authState.isLoading) return null;
 
       final isLoggedIn = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == '/login';
       final isRegisterRoute = state.matchedLocation == '/register';
-      final isSplashRoute = state.matchedLocation == '/';
-
-      // Stay on splash screen during initial load
-      if (isSplashRoute && state.extra == 'initialLoad') return null;
 
       // If not logged in, go to login
       if (!isLoggedIn && !isLoginRoute && !isRegisterRoute) {
@@ -54,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // If logged in, go to home
-      if (isLoggedIn && (isLoginRoute || isRegisterRoute || isSplashRoute)) {
+      if (isLoggedIn && (isLoginRoute || isRegisterRoute)) {
         return '/home';
       }
 

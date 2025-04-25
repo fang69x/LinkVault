@@ -61,9 +61,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Add a small delay to let the splash screen render
-      await Future.delayed(const Duration(milliseconds: 300));
-
       final tokenValid = await _authService.verifyToken();
 
       if (tokenValid) {
@@ -74,7 +71,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false,
         );
       } else {
-        await logout();
+        await logout(silent: true);
         state = state.copyWith(isLoading: false);
       }
     } catch (e) {
@@ -82,7 +79,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         error: e.toString(),
       );
-      await logout();
+      await logout(silent: true);
     }
   }
 

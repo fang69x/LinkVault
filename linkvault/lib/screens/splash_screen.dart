@@ -22,30 +22,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     });
   }
 
-  // Future<void> _checkAuthAndNavigate() async {
-  //   try {
-  //     // Perform auth check (will update state)
-  //     await ref.read(authNotifierProvider.notifier).checkAuthStatus();
-
-  //     // Let the router handle navigation based on updated state
-  //     // No need for manual navigation here
-  //   } catch (e) {
-  //     // Fallback to login if something fails
-  //     if (mounted) GoRouter.of(context).go('/login');
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
-    // In SplashScreen build()
-    final isLoading =
-        ref.watch(authNotifierProvider.select((s) => s.isLoading));
-
-    if (isLoading) {
-      return const CircularProgressIndicator(
-        color: Colors.red,
-      );
-    }
+    // We're always showing the full splash screen, not just a progress indicator
     return Scaffold(
       backgroundColor: AppTheme.primaryColor,
       body: Center(

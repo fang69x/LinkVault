@@ -12,9 +12,7 @@ void main() async {
   // Initialize services
   await ConnectivityService.initialize();
 
-  // Create provider container for initial auth check
   final container = ProviderContainer();
-  await container.read(authNotifierProvider.notifier).checkAuthStatus();
 
   runApp(
     UncontrolledProviderScope(

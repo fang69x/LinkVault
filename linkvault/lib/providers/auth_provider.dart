@@ -50,15 +50,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Stream<AuthState> get stream => _controller.stream;
 
-  // Update state and notify stream
   @override
   set state(AuthState value) {
     super.state = value;
     _controller.add(value);
   }
 
-  Future<void> checkAuthStatus() async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> checkAuthStatus({bool silent = false}) async {
+    if (!silent) state = state.copyWith(isLoading: true, error: null);
+
     try {
       final tokenValid = await _authService.verifyToken();
 
@@ -70,15 +70,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false,
         );
       } else {
-        await logout();
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(
+          isAuthenticated: false,
+          user: null,
+          isLoading: false,
+        );
       }
     } catch (e) {
       state = state.copyWith(
+        isAuthenticated: false,
+        user: null,
         isLoading: false,
-        error: e.toString(),
+        error: silent ? null : e.toString(),
       );
-      await logout();
     }
   }
 
@@ -123,22 +127,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> logout() async {
-    state = state.copyWith(isLoading: true);
+  Future<void> logout({bool silent = false}) async {
+    if (!silent) state = state.copyWith(isLoading: true);
     try {
       await _authService.logout();
       state = AuthState.initial();
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      if (!silent) {
+        state = state.copyWith(
+          isLoading: false,
+          error: e.toString(),
+        );
+      }
     }
+  }
+
+  Future<void> updateUser(User user) async {
+    state = state.copyWith(user: user);
   }
 
   @override
   void dispose() {
-    _controller.close(); // close stream on cleanup
+    _controller.close();
     super.dispose();
   }
 }

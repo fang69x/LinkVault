@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:linkvault/providers/auth_provider.dart';
 
 import 'package:linkvault/services/connectivity_services.dart';
 import 'package:linkvault/utils/theme.dart';
@@ -8,10 +9,21 @@ import 'package:linkvault/routes/app_routes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services if needed
+  // Initialize services
   await ConnectivityService.initialize();
 
-  runApp(const ProviderScope(child: MyApp()));
+  // Create provider container for initial auth check
+  final container = ProviderContainer();
+  await container
+      .read(authNotifierProvider.notifier)
+      .checkAuthStatus(silent: true);
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {

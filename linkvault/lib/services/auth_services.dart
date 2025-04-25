@@ -68,9 +68,7 @@ class AuthService {
 
   Future<bool> verifyToken() async {
     try {
-      final token = await _apiService.getToken();
-      if (token == null) return false;
-      await _apiService.get('/api/auth/validate-token'); // Add backend endpoint
+      await getCurrentUser();
       return true;
     } catch (e) {
       return false;

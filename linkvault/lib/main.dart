@@ -14,9 +14,7 @@ void main() async {
 
   // Create provider container for initial auth check
   final container = ProviderContainer();
-  await container
-      .read(authNotifierProvider.notifier)
-      .checkAuthStatus(silent: true);
+  await container.read(authNotifierProvider.notifier).checkAuthStatus();
 
   runApp(
     UncontrolledProviderScope(

@@ -37,31 +37,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      // Skip redirect during loading
+      // Only redirect if auth check is complete (not loading)
       if (authState.isLoading) return null;
 
       final isLoggedIn = authState.isAuthenticated;
-      final isSplash = state.matchedLocation == '/';
-      final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
-// In router redirect
-      debugPrint('''
-Redirect Decision:
-- isLoggedIn: $isLoggedIn
-- currentRoute: ${state.matchedLocation}
-- isLoading: ${authState.isLoading}
-''');
-      // If logged in and trying to access auth/splash, go home
-      if (isLoggedIn && (isSplash || isAuthRoute)) {
-        return '/home';
-      }
+      final isLoginRoute = state.matchedLocation == '/login';
+      final isRegisterRoute = state.matchedLocation == '/register';
+      final isSplashRoute = state.matchedLocation == '/';
 
-      // If not logged in and trying to access protected routes, go login
-      if (!isLoggedIn && !isAuthRoute && !isSplash) {
+      // Stay on splash screen during initial load
+      if (isSplashRoute && state.extra == 'initialLoad') return null;
+
+      // If not logged in, go to login
+      if (!isLoggedIn && !isLoginRoute && !isRegisterRoute) {
         return '/login';
       }
 
-      return null; // No redirect needed
+      // If logged in, go to home
+      if (isLoggedIn && (isLoginRoute || isRegisterRoute || isSplashRoute)) {
+        return '/home';
+      }
+
+      return null;
     },
     refreshListenable: GoRouterRefreshStream(
       ref.watch(authNotifierProvider.notifier).stream,

@@ -56,10 +56,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _controller.add(value);
   }
 
-  Future<void> checkAuthStatus({bool silent = false}) async {
-    if (!silent) state = state.copyWith(isLoading: true, error: null);
+  Future<void> checkAuthStatus() async {
+    // Set loading to true at the beginning
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
+      // Add a small delay to let the splash screen render
+      await Future.delayed(const Duration(milliseconds: 300));
+
       final tokenValid = await _authService.verifyToken();
 
       if (tokenValid) {
@@ -70,19 +74,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false,
         );
       } else {
-        state = state.copyWith(
-          isAuthenticated: false,
-          user: null,
-          isLoading: false,
-        );
+        await logout();
+        state = state.copyWith(isLoading: false);
       }
     } catch (e) {
       state = state.copyWith(
-        isAuthenticated: false,
-        user: null,
         isLoading: false,
-        error: silent ? null : e.toString(),
+        error: e.toString(),
       );
+      await logout();
     }
   }
 

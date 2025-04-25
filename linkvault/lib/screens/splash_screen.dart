@@ -15,9 +15,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Just trigger auth check - router will handle navigation
-      ref.read(authNotifierProvider.notifier).checkAuthStatus();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        ref.read(authNotifierProvider.notifier).checkAuthStatus();
+      }
     });
   }
 

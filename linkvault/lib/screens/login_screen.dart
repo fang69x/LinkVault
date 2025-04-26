@@ -47,6 +47,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
+// hell of an issue this was
+// ref.listen shouldnt be called in init state
+
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(

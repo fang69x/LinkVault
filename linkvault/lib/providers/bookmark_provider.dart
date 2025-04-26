@@ -46,7 +46,6 @@ class BookmarkNotifier extends StateNotifier<BookmarkState> {
     }
   }
 
-  // Create a new bookmark
   Future<void> createBookmark(Bookmark bookmark) async {
     state = state.copyWith(isSubmitting: true, error: null);
     try {
@@ -55,12 +54,13 @@ class BookmarkNotifier extends StateNotifier<BookmarkState> {
         bookmarks: [newBookmark, ...state.bookmarks],
         isSubmitting: false,
       );
+      return; // Explicit return on success
     } catch (e) {
       state = state.copyWith(
         isSubmitting: false,
         error: e.toString(),
       );
-      rethrow;
+      throw e; // Re-throw for UI handling
     }
   }
 

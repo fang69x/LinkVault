@@ -92,51 +92,42 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
     });
   }
 
-  Future<void> _saveBookmark() async {
+  void _saveBookmark() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Ensure URL has http:// or https:// prefix
-    String url = _urlController.text;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-
-    final authService = ref.read(authServiceProvider);
-    final user = await authService.getCurrentUser();
-    final bookmark = Bookmark(
-      id: _isEditMode ? widget.bookmark!.id : null,
-      title: _titleController.text,
-      url: url,
-      note: _noteController.text.isEmpty ? null : _noteController.text,
-      category: _categoryController.text,
-      tags: _tags,
-      userId: user.id, // assuming user has an 'id' field
-      createdAt: _isEditMode ? widget.bookmark!.createdAt : DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
     try {
+      String url = _urlController.text;
+      if (!url.startsWith('http')) url = 'https://$url';
+
+      final user = await ref.read(authServiceProvider).getCurrentUser();
+
+      final bookmark = Bookmark(
+        id: _isEditMode ? widget.bookmark!.id : null,
+        title: _titleController.text,
+        url: url,
+        note: _noteController.text.isEmpty ? null : _noteController.text,
+        category: _categoryController.text,
+        tags: _tags,
+        createdAt: _isEditMode ? widget.bookmark!.createdAt : DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: user.id,
+      );
+
       if (_isEditMode) {
-        await ref.read(bookmarkNotifierProvider.notifier).updateBookmark(
-              widget.bookmark!.id ?? '',
-              bookmark,
-            );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Bookmark updated successfully')),
-          );
-          Navigator.pop(context);
-        }
+        await ref
+            .read(bookmarkNotifierProvider.notifier)
+            .updateBookmark(widget.bookmark!.id!, bookmark);
       } else {
         await ref
             .read(bookmarkNotifierProvider.notifier)
             .createBookmark(bookmark);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Bookmark created successfully')),
-          );
-          Navigator.pop(context);
-        }
+
+        // Force refresh the bookmark list
+        ref.read(bookmarkNotifierProvider.notifier).getBookmarks(refresh: true);
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -261,13 +252,13 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: isSubmitting ? null : _saveBookmark,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 200),
                 child: isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? CircularProgressIndicator(color: Colors.white)
                     : Text(_isEditMode ? 'Update Bookmark' : 'Save Bookmark'),
               ),
-            ),
+            )
           ],
         ),
       ),

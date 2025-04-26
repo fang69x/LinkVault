@@ -37,8 +37,10 @@ class BookmarkServices {
     try {
       final response =
           await _apiServices.post('/api/bookmarks', bookmark.toJson());
+      if (response == null) throw Exception('Empty API response');
       return Bookmark.fromJson(response);
     } catch (e) {
+      print('Error creating bookmark: ${e.toString()}');
       rethrow;
     }
   }

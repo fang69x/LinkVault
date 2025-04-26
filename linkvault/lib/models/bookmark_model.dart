@@ -24,12 +24,13 @@ class Bookmark {
   factory Bookmark.fromJson(Map<String, dynamic> json) {
     return Bookmark(
       id: json['_id'],
-      title: json['title'],
-      url: json['url'],
+      title: json['title'] ?? '',
+      url: json['url'] ?? '',
       note: json['note'],
-      category: json['category'],
+      category: json['category'] ?? '',
       tags: List<String>.from(json['tags'] ?? []),
-      userId: json['user'],
+      userId:
+          json['user']?.toString() ?? '', // Convert ObjectId to string safely
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt:

@@ -64,6 +64,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _controller.add(value);
   }
 
+  void resetState() {
+    state = AuthState.initial();
+  }
+
   Future<bool> checkAuthStatus() async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -99,28 +103,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
     try {
+      state = state.copyWith(isLoading: true, error: null);
       final user = await _authService.login(email, password);
       state = state.copyWith(
         isAuthenticated: true,
         user: user,
         isLoading: false,
       );
-      // Explicitly add to stream
-      _controller.add(state);
-      debugPrint(
-          'Login successful - Token: ${await _authService.getCurrentUser()}');
-    } catch (e, stackTrace) {
-      debugPrint('Login error: $e');
-      debugPrint('Stack trace: $stackTrace');
+    } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: e is SocketException
             ? 'Connection failed. Check your network'
             : e.toString(),
       );
-      _controller.add(state);
       rethrow;
     }
   }
@@ -180,86 +177,3 @@ final authNotifierProvider =
   final authService = ref.watch(authServiceProvider);
   return AuthNotifier(authService);
 });
-
-class AuthService {
-  final ApiServices _apiService = ApiServices();
-
-  Future<User> getCurrentUser() async {
-    try {
-      final response = await _apiService.get('/api/auth/me');
-      return User.fromJson(response['user']);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // User registration with optional avatar
-  Future<User> register(String name, String email, String password,
-      {String? avatarPath}) async {
-    try {
-      final Map<String, String> fields = {
-        'name': name,
-        'email': email,
-        'password': password,
-      };
-
-      final response = await _apiService.postMultipart(
-        '/api/auth/register',
-        fields,
-        avatarPath ?? '',
-        'avatar',
-      );
-
-      await _apiService.saveToken(response['token']);
-      print("Saving token: ${response['token']}");
-      return User.fromJson(response['user']);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // User login
-  Future<User> login(String email, String password) async {
-    try {
-      final data = {
-        'email': email,
-        'password': password,
-      };
-
-      final response = await _apiService.post('/api/auth/login', data);
-
-      await _apiService.saveToken(response['token']);
-      return User.fromJson(response['user']);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // Check if user is logged in
-  Future<bool> isLoggedIn() async {
-    final token = await _apiService.getToken();
-    return token != null;
-  }
-
-  // Logout user
-  Future<void> logout() async {
-    await _apiService.clearToken();
-  }
-
-  Future<bool> verifyToken() async {
-    try {
-      // Check if token exists first
-      final token = await _apiService.getToken();
-      if (token == null || token.isEmpty) {
-        print("No token found - first time user");
-        return false;
-      }
-      // Only try to validate with the server if we have a token
-      await getCurrentUser();
-      return true;
-    } catch (e) {
-      print("Token verification failed: $e");
-      return false;
-    }
-  }
-}

@@ -7,7 +7,6 @@ import 'package:linkvault/screens/home_screen.dart';
 import 'package:linkvault/screens/login_screen.dart';
 import 'package:linkvault/screens/register_screen.dart';
 import 'package:linkvault/screens/splash_screen.dart';
-import 'package:linkvault/services/auth_services.dart';
 
 // Helper class to refresh router when auth state changes
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -55,44 +54,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      final String? matchedLocation = state.matchedLocation;
-      final bool isLoggedIn = authState.isAuthenticated;
-      final bool isLoginRoute = matchedLocation == '/login';
-      final bool isRegisterRoute = matchedLocation == '/register';
-      final bool isHomeRoute = matchedLocation == '/home';
-      final bool isSplashRoute = matchedLocation == '/';
+      final isSplash = state.matchedLocation == '/';
+      final isAuthRoute = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register';
+      final isHome = state.matchedLocation == '/home';
 
-      // 1. Always allow the splash screen.
-      if (isSplashRoute) {
-        return null;
+      // Splash screen handling
+      if (isSplash) return null;
+
+      // Authentication state handling
+      if (authState.isLoading) return null;
+
+      if (!authState.isAuthenticated) {
+        return isAuthRoute ? null : '/login';
       }
 
-      // 2. If the user is not logged in
-      if (!isLoggedIn) {
-        // ...and is on login or register, allow.
-        if (isLoginRoute || isRegisterRoute) {
-          return null;
-        }
-        // ...otherwise, redirect to login.
-        return '/login';
-      }
-
-      // 3. If the user is logged in
-      if (isLoggedIn) {
-        // ...and is on login or register, redirect to home.
-        if (isLoginRoute || isRegisterRoute) {
-          return '/home';
-        }
-        // ...and is on home, allow.  Important:  Only allow if *already* on home.
-        if (isHomeRoute) {
-          return null;
-        }
-        return '/home'; // Ensure we go to home.
-      }
-      return null;
+      return isAuthRoute ? '/home' : null;
     },
-    refreshListenable: GoRouterRefreshStream(
-      authNotifier.stream, // Use the stream from the notifier.
-    ),
+    refreshListenable: GoRouterRefreshStream(authNotifier.stream),
   );
 });

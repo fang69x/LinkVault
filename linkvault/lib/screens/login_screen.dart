@@ -19,9 +19,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+
+    // Listen to AuthState changes
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    ref.read(authNotifierProvider.notifier).resetState();
     super.dispose();
   }
 
@@ -29,34 +37,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final notifier = ref.read(authNotifierProvider.notifier);
-    try {
-      await notifier.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      // Only navigate if still mounted and authenticated
-      if (mounted && ref.read(authNotifierProvider).isAuthenticated) {
-        context.go('/home');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    }
+    await notifier.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    // No need to navigate here; ref.listen will handle navigation
   }
 
   @override
   Widget build(BuildContext context) {
-    print("LoginScreen build() called");
     final authState = ref.watch(authNotifierProvider);
-    print("AuthState: $authState");
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      if (next.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+
+      if (next.isAuthenticated && mounted) {
+        context.go('/home');
+      }
+    });
     return Scaffold(
       body: ResponsiveContainer(
         child: SafeArea(
@@ -69,14 +73,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // App logo
                     const Icon(
                       Icons.bookmark,
                       size: 80,
                       color: Colors.deepPurple,
                     ),
                     const SizedBox(height: 24),
-                    // Title
                     const Text(
                       'Welcome Back',
                       style: TextStyle(
@@ -95,7 +97,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-                    // Email field
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -107,7 +108,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: FormValidators.emailValidator,
                     ),
                     const SizedBox(height: 16),
-                    // Password field
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -130,7 +130,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: FormValidators.passwordValidator,
                     ),
                     const SizedBox(height: 24),
-                    // Login button
                     ElevatedButton(
                       onPressed: authState.isLoading ? null : _login,
                       child: authState.isLoading
@@ -145,7 +144,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : const Text('Log In'),
                     ),
                     const SizedBox(height: 16),
-                    // Register link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

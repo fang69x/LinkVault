@@ -1,19 +1,37 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:linkvault/providers/auth_provider.dart';
-
 import 'package:linkvault/screens/home_screen.dart';
 import 'package:linkvault/screens/login_screen.dart';
 import 'package:linkvault/screens/register_screen.dart';
-
 import 'package:linkvault/screens/splash_screen.dart';
 import 'package:linkvault/services/auth_services.dart';
 
-// Auth state provider to determine if user is logged in
+// Helper class to refresh router when auth state changes
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    _subscription = stream.listen((_) {
+      if (_isDisposed) return;
+      notifyListeners();
+    });
+  }
+
+  late final StreamSubscription _subscription;
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+// Auth state provider
 final routerProvider = Provider<GoRouter>((ref) {
+  final authNotifier = ref.watch(authNotifierProvider.notifier);
   final authState = ref.watch(authNotifierProvider);
 
   return GoRouter(
@@ -37,46 +55,44 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      // Always allow splash screen to show first
-      final isSplashRoute = state.matchedLocation == '/';
-      if (isSplashRoute) return null;
+      final String? matchedLocation = state.matchedLocation;
+      final bool isLoggedIn = authState.isAuthenticated;
+      final bool isLoginRoute = matchedLocation == '/login';
+      final bool isRegisterRoute = matchedLocation == '/register';
+      final bool isHomeRoute = matchedLocation == '/home';
+      final bool isSplashRoute = matchedLocation == '/';
 
-      // Only redirect if auth check is complete
-      if (authState.isLoading) return null;
+      // 1. Always allow the splash screen.
+      if (isSplashRoute) {
+        return null;
+      }
 
-      final isLoggedIn = authState.isAuthenticated;
-      final isLoginRoute = state.matchedLocation == '/login';
-      final isRegisterRoute = state.matchedLocation == '/register';
-
-      // If not logged in, go to login
-      if (!isLoggedIn && !isLoginRoute && !isRegisterRoute) {
+      // 2. If the user is not logged in
+      if (!isLoggedIn) {
+        // ...and is on login or register, allow.
+        if (isLoginRoute || isRegisterRoute) {
+          return null;
+        }
+        // ...otherwise, redirect to login.
         return '/login';
       }
 
-      // If logged in, go to home
-      if (isLoggedIn && (isLoginRoute || isRegisterRoute)) {
-        return '/home';
+      // 3. If the user is logged in
+      if (isLoggedIn) {
+        // ...and is on login or register, redirect to home.
+        if (isLoginRoute || isRegisterRoute) {
+          return '/home';
+        }
+        // ...and is on home, allow.  Important:  Only allow if *already* on home.
+        if (isHomeRoute) {
+          return null;
+        }
+        return '/home'; // Ensure we go to home.
       }
-
       return null;
     },
     refreshListenable: GoRouterRefreshStream(
-      ref.watch(authNotifierProvider.notifier).stream,
+      authNotifier.stream, // Use the stream from the notifier.
     ),
   );
 });
-
-// Helper class to refresh router when auth state changes
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    _subscription = stream.listen((_) => notifyListeners());
-  }
-
-  late final StreamSubscription _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-}

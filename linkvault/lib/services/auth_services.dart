@@ -32,6 +32,7 @@ class AuthService {
       );
 
       await _apiService.saveToken(response['token']);
+      print("Saving token: ${response['token']}");
       return User.fromJson(response['user']);
     } catch (e) {
       rethrow;
@@ -68,9 +69,17 @@ class AuthService {
 
   Future<bool> verifyToken() async {
     try {
+      // Check if token exists first
+      final token = await _apiService.getToken();
+      if (token == null || token.isEmpty) {
+        print("No token found - first time user");
+        return false;
+      }
+      // Only try to validate with the server if we have a token
       await getCurrentUser();
       return true;
     } catch (e) {
+      print("Token verification failed: $e");
       return false;
     }
   }

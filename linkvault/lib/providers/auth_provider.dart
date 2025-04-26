@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:linkvault/models/user_model.dart';
+import 'package:linkvault/services/api_services.dart';
 import 'package:linkvault/services/auth_services.dart';
 
 class AuthState {
@@ -53,11 +56,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
   @override
   set state(AuthState value) {
     super.state = value;
+    debugPrint('''AuthState Update:
+    Authenticated: ${value.isAuthenticated}
+    Loading: ${value.isLoading}
+    Error: ${value.error}
+  ''');
     _controller.add(value);
   }
 
-  Future<void> checkAuthStatus() async {
-    // Set loading to true at the beginning
+  Future<bool> checkAuthStatus() async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -70,16 +77,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: user,
           isLoading: false,
         );
+        return true;
       } else {
-        await logout(silent: true);
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(
+          isAuthenticated: false,
+          user: null,
+          isLoading: false,
+        );
+        return false;
       }
     } catch (e) {
       state = state.copyWith(
+        isAuthenticated: false,
+        user: null,
         isLoading: false,
         error: e.toString(),
       );
-      await logout(silent: true);
+      // Important:  Don't throw here, handle in the caller.
+      return false; // Return false to indicate failure
     }
   }
 
@@ -92,11 +107,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: user,
         isLoading: false,
       );
-    } catch (e) {
+      // Explicitly add to stream
+      _controller.add(state);
+      debugPrint(
+          'Login successful - Token: ${await _authService.getCurrentUser()}');
+    } catch (e, stackTrace) {
+      debugPrint('Login error: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: e is SocketException
+            ? 'Connection failed. Check your network'
+            : e.toString(),
       );
+      _controller.add(state);
       rethrow;
     }
   }
@@ -121,6 +145,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         error: e.toString(),
       );
+      rethrow;
     }
   }
 
@@ -155,3 +180,86 @@ final authNotifierProvider =
   final authService = ref.watch(authServiceProvider);
   return AuthNotifier(authService);
 });
+
+class AuthService {
+  final ApiServices _apiService = ApiServices();
+
+  Future<User> getCurrentUser() async {
+    try {
+      final response = await _apiService.get('/api/auth/me');
+      return User.fromJson(response['user']);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // User registration with optional avatar
+  Future<User> register(String name, String email, String password,
+      {String? avatarPath}) async {
+    try {
+      final Map<String, String> fields = {
+        'name': name,
+        'email': email,
+        'password': password,
+      };
+
+      final response = await _apiService.postMultipart(
+        '/api/auth/register',
+        fields,
+        avatarPath ?? '',
+        'avatar',
+      );
+
+      await _apiService.saveToken(response['token']);
+      print("Saving token: ${response['token']}");
+      return User.fromJson(response['user']);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // User login
+  Future<User> login(String email, String password) async {
+    try {
+      final data = {
+        'email': email,
+        'password': password,
+      };
+
+      final response = await _apiService.post('/api/auth/login', data);
+
+      await _apiService.saveToken(response['token']);
+      return User.fromJson(response['user']);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    final token = await _apiService.getToken();
+    return token != null;
+  }
+
+  // Logout user
+  Future<void> logout() async {
+    await _apiService.clearToken();
+  }
+
+  Future<bool> verifyToken() async {
+    try {
+      // Check if token exists first
+      final token = await _apiService.getToken();
+      if (token == null || token.isEmpty) {
+        print("No token found - first time user");
+        return false;
+      }
+      // Only try to validate with the server if we have a token
+      await getCurrentUser();
+      return true;
+    } catch (e) {
+      print("Token verification failed: $e");
+      return false;
+    }
+  }
+}

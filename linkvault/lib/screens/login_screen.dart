@@ -26,20 +26,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      final notifier = ref.read(authNotifierProvider.notifier);
+    if (!_formKey.currentState!.validate()) return;
 
-      try {
-        await notifier.login(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-      } catch (e) {
-        if (!mounted) return;
+    final notifier = ref.read(authNotifierProvider.notifier);
+    try {
+      await notifier.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      // Only navigate if still mounted and authenticated
+      if (mounted && ref.read(authNotifierProvider).isAuthenticated) {
+        context.go('/home');
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Login failed: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -48,8 +54,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("LoginScreen build() called");
     final authState = ref.watch(authNotifierProvider);
-
+    print("AuthState: $authState");
     return Scaffold(
       body: ResponsiveContainer(
         child: SafeArea(

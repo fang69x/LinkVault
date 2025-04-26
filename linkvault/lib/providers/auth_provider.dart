@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:linkvault/models/user_model.dart';
-import 'package:linkvault/services/api_services.dart';
 import 'package:linkvault/services/auth_services.dart';
 
 class AuthState {

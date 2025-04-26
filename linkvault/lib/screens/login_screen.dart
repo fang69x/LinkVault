@@ -41,7 +41,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _emailController.text.trim(),
       _passwordController.text,
     );
-    // No need to navigate here; ref.listen will handle navigation
   }
 
   @override

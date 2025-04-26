@@ -92,7 +92,7 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
     });
   }
 
-  void _saveBookmark() async {
+  Future<void> _saveBookmark() async {
     if (!_formKey.currentState!.validate()) return;
 
     try {
@@ -100,6 +100,12 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
       if (!url.startsWith('http')) url = 'https://$url';
 
       final user = await ref.read(authServiceProvider).getCurrentUser();
+      print('User ID: ${user?.id}');
+
+      // Add error handling for missing user ID
+      if (user == null || user.id == null) {
+        throw Exception('User ID is null: ${user?.toJson()}');
+      }
 
       final bookmark = Bookmark(
         id: _isEditMode ? widget.bookmark!.id : null,
@@ -110,9 +116,9 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
         tags: _tags,
         createdAt: _isEditMode ? widget.bookmark!.createdAt : DateTime.now(),
         updatedAt: DateTime.now(),
-        userId: user.id,
+        userId: user.id, // Ensure this is not null
       );
-
+      print('Creating bookmark with: ${bookmark.toJson()}');
       if (_isEditMode) {
         await ref
             .read(bookmarkNotifierProvider.notifier)

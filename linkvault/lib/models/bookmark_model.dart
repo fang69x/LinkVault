@@ -23,14 +23,13 @@ class Bookmark {
 
   factory Bookmark.fromJson(Map<String, dynamic> json) {
     return Bookmark(
-      id: json['_id'],
+      id: json['_id']?.toString(), // Handle potential null
       title: json['title'] ?? '',
       url: json['url'] ?? '',
       note: json['note'],
       category: json['category'] ?? '',
       tags: List<String>.from(json['tags'] ?? []),
-      userId:
-          json['user']?.toString() ?? '', // Convert ObjectId to string safely
+      userId: _parseUserId(json['user']), // Use helper function
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt:
@@ -38,6 +37,14 @@ class Bookmark {
     );
   }
 
+// Add this helper method
+  static String _parseUserId(dynamic userData) {
+    if (userData is String) return userData;
+    if (userData is Map) return userData['_id']?.toString() ?? '';
+    return '';
+  }
+
+// Update toJson to match server field name
   Map<String, dynamic> toJson() {
     return {
       'title': title,
@@ -45,6 +52,7 @@ class Bookmark {
       'note': note,
       'category': category,
       'tags': tags,
+      'user': userId, // Map to 'user' field expected by server
     };
   }
 }

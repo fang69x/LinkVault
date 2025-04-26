@@ -13,24 +13,31 @@ const handleErrors = (error, res) => {
 
 
 // create a new bookmark
-export const createBookmark=async(req,res)=>{
+export const createBookmark = async (req, res) => {
     try {
-        const {title,url,note,category,tags}=req.body;
-        const bookmark=new Bookmark({
-            title,
-            url,
-            note,
-            category,
-            tags,
-            user: req.user._id,
-        });
-        const savedBookmark=await bookmark.save();
-        res.status(201).json(savedBookmark)
+      const { title, url, note, category, tags } = req.body;
+      const bookmark = new Bookmark({
+        title,
+        url,
+        note,
+        category,
+        tags,
+        user: req.user._id,
+      });
+  
+      const savedBookmark = await bookmark.save();
+      
+      // Convert Mongoose document to a plain object
+      const responseBookmark = savedBookmark.toObject(); 
+      
+      // Convert ObjectId to string
+      responseBookmark.user = responseBookmark.user.toString();
+      
+      res.status(201).json(responseBookmark);
     } catch (error) {
-        handleErrors(error,res);
+      handleErrors(error, res);
     }
-};
-
+  };
 //get all bookmark for a user
 
 export const getBookmarks=async(req,res)=>{

@@ -318,7 +318,7 @@ class BookmarkCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _formatDate(bookmark.createdAt as String),
+                    _formatDate(bookmark.createdAt),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -358,8 +358,8 @@ class BookmarkCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(String dateString) {
-    final date = DateTime.parse(dateString);
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'No date';
     final now = DateTime.now();
     final difference = now.difference(date);
 

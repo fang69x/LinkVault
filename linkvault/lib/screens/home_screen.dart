@@ -7,6 +7,7 @@ import 'package:linkvault/providers/bookmark_provider.dart';
 import 'package:linkvault/utils/theme.dart';
 import 'package:linkvault/widgets/bookmark_card.dart';
 import 'package:linkvault/widgets/responsive_container.dart';
+import 'package:linkvault/widgets/shimmer.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -119,9 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               if (bookmarkState.isLoading && bookmarkState.bookmarks.isEmpty)
                 const SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: BookmarkShimmer(), // Show shimmer
                 )
               else if (bookmarkState.bookmarks.isEmpty)
                 SliverFillRemaining(

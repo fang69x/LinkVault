@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:linkvault/providers/auth_provider.dart';
+import 'package:linkvault/screens/bookmark_detail_screen.dart';
 import 'package:linkvault/screens/create_bookmark_screen.dart';
 import 'package:linkvault/screens/home_screen.dart';
 import 'package:linkvault/screens/login_screen.dart';
 import 'package:linkvault/screens/register_screen.dart';
+import 'package:linkvault/screens/search_screen.dart';
 import 'package:linkvault/screens/splash_screen.dart';
 
 // Helper class to refresh router when auth state changes
@@ -61,9 +63,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/bookmark/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
+          return BookmarkDetailScreen(bookmarkId: id);
+        },
+      ),
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: '/edit-bookmark',
+        builder: (context, state) {
+          final bookmark = state.extra;
           return Scaffold(
-            appBar: AppBar(title: Text('Bookmark $id')),
-            body: Center(child: Text('Bookmark Detail Page for ID: $id')),
+            appBar: AppBar(title: const Text('Edit Bookmark')),
+            body: Center(child: Text('Edit Bookmark Page for: $bookmark')),
           );
         },
       ),

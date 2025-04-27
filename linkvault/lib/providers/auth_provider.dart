@@ -68,7 +68,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<bool> checkAuthStatus() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
 
     try {
       final tokenValid = await _authService.verifyToken();

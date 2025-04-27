@@ -160,7 +160,11 @@ class BookmarkCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(dynamic dateValue) {
+    final date =
+        dateValue is String ? DateTime.parse(dateValue) : dateValue as DateTime;
+    final now = DateTime.now();
+    final difference = now.difference(date);
     return '${date.day}/${date.month}/${date.year}';
   }
 }

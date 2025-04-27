@@ -29,8 +29,8 @@ class _BookmarkDetailScreenState extends ConsumerState<BookmarkDetailScreen> {
 
   @override
   void dispose() {
-    ref.read(bookmarkNotifierProvider.notifier).clearSelectedBookmark();
     super.dispose();
+    ref.read(bookmarkNotifierProvider.notifier).clearSelectedBookmark();
   }
 
   Future<void> _launchURL(String url) async {
@@ -154,7 +154,7 @@ class _BookmarkDetailScreenState extends ConsumerState<BookmarkDetailScreen> {
                                     onTap: () => _launchURL(bookmark.url),
                                     child: Text(
                                       bookmark.url,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: AppTheme.primaryColor,
                                         decoration: TextDecoration.underline,
                                       ),
@@ -168,7 +168,7 @@ class _BookmarkDetailScreenState extends ConsumerState<BookmarkDetailScreen> {
                                             .withOpacity(0.2),
                                         label: Text(
                                           bookmark.category,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             color: AppTheme.primaryColor,
                                           ),
                                         ),
@@ -227,7 +227,7 @@ class _BookmarkDetailScreenState extends ConsumerState<BookmarkDetailScreen> {
                                       AppTheme.accentColor.withOpacity(0.2),
                                   label: Text(
                                     tag,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: AppTheme.accentColor,
                                     ),
                                   ),
@@ -242,7 +242,7 @@ class _BookmarkDetailScreenState extends ConsumerState<BookmarkDetailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _formatDate(bookmark.createdAt as String),
+                            _formatDate(bookmark.createdAt),
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           if (bookmark.createdAt != bookmark.updatedAt) ...[
@@ -253,7 +253,7 @@ class _BookmarkDetailScreenState extends ConsumerState<BookmarkDetailScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              _formatDate(bookmark.updatedAt as String),
+                              _formatDate(bookmark.updatedAt),
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -263,8 +263,10 @@ class _BookmarkDetailScreenState extends ConsumerState<BookmarkDetailScreen> {
     );
   }
 
-  String _formatDate(String dateString) {
-    final date = DateTime.parse(dateString);
+  String _formatDate(dynamic dateValue) {
+    if (dateValue == null) return 'No date';
+    final date =
+        dateValue is String ? DateTime.parse(dateValue) : dateValue as DateTime;
     return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 }

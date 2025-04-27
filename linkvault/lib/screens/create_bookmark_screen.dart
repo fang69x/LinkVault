@@ -100,25 +100,24 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
       if (!url.startsWith('http')) url = 'https://$url';
 
       final user = await ref.read(authServiceProvider).getCurrentUser();
-      print('User ID: ${user?.id}');
-
-      // Add error handling for missing user ID
       if (user == null || user.id == null) {
-        throw Exception('User ID is null: ${user?.toJson()}');
+        throw Exception('User ID is null: ${user.toJson()}');
       }
 
       final bookmark = Bookmark(
-        id: _isEditMode ? widget.bookmark!.id : null,
+        id: _isEditMode ? widget.bookmark?.id : null,
         title: _titleController.text,
         url: url,
         note: _noteController.text.isEmpty ? null : _noteController.text,
-        category: _categoryController.text,
-        tags: _tags,
-        createdAt: _isEditMode ? widget.bookmark!.createdAt : DateTime.now(),
+        category: _categoryController.text.isEmpty
+            ? 'Uncategorized'
+            : _categoryController.text,
+        tags: _tags.isEmpty ? ['General'] : _tags,
+        createdAt: _isEditMode ? widget.bookmark?.createdAt : DateTime.now(),
         updatedAt: DateTime.now(),
-        userId: user.id, // Ensure this is not null
+        userId: user.id,
       );
-      print('Creating bookmark with: ${bookmark.toJson()}');
+
       if (_isEditMode) {
         await ref
             .read(bookmarkNotifierProvider.notifier)
@@ -127,8 +126,6 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
         await ref
             .read(bookmarkNotifierProvider.notifier)
             .createBookmark(bookmark);
-
-        // Force refresh the bookmark list
         ref.read(bookmarkNotifierProvider.notifier).getBookmarks(refresh: true);
       }
 

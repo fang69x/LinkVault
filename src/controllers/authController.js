@@ -72,12 +72,12 @@ return res.status(400).json({
     });
 }
 };
-// controllers/user.controller.js (FIXED)
+
 export const getCurrentUser = async (req, res) => {
     try {
       // Use req.user (already populated by middleware)
       res.status(200).json({
-        user: req.user // ✅ No need for User.findById()
+        user: req.user 
       });
     } catch (error) {
       res.status(500).json({ message: "Error fetching user", error: error.message });

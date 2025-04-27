@@ -23,7 +23,7 @@ class Bookmark {
 
   factory Bookmark.fromJson(Map<String, dynamic> json) {
     return Bookmark(
-      id: json['_id']?.toString(), // Handle potential null
+      id: json['_id']?.toString(),
       title: json['title'] ?? '',
       url: json['url'] ?? '',
       note: json['note'],

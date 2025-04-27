@@ -10,6 +10,7 @@ class AuthService {
       final response = await _apiService.get('/api/auth/me');
       return User.fromJson(response['user']);
     } catch (e) {
+      print('getCurrentUser error: $e');
       rethrow;
     }
   }
@@ -46,10 +47,12 @@ class AuthService {
         'email': email,
         'password': password,
       };
-
       final response = await _apiService.post('/api/auth/login', data);
-
       await _apiService.saveToken(response['token']);
+
+// Add this after saving token
+      final token = await _apiService.getToken();
+      print('Saved token: $token');
       return User.fromJson(response['user']);
     } catch (e) {
       rethrow;

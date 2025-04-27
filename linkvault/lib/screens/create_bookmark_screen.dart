@@ -99,9 +99,12 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
       String url = _urlController.text;
       if (!url.startsWith('http')) url = 'https://$url';
 
-      final user = await ref.read(authServiceProvider).getCurrentUser();
-      if (user == null || user.id == null) {
-        throw Exception('User ID is null: ${user.toJson()}');
+      final user = ref.read(authNotifierProvider).user;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('User is not logged in. Please login again.')),
+        );
+        return;
       }
 
       final bookmark = Bookmark(

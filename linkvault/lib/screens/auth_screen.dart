@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +7,9 @@ import 'package:linkvault/providers/auth_provider.dart';
 import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/utils/form_validator.dart';
 import 'package:linkvault/widgets/responsive_container.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -29,18 +33,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   bool _obscureConfirmPassword = true;
   bool _isLogin = true;
   File? _avatarFile;
+  bool _agreeToTerms = true;
 
   // Animation controller for smooth transitions
   late TabController _tabController;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      setState(() {
-        _isLogin = _tabController.index == 0;
-      });
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _isLogin = _tabController.index == 0;
+          _pageController.animateToPage(
+            _tabController.index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        });
+      }
     });
   }
 
@@ -51,6 +64,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     _nameController.dispose();
     _confirmPasswordController.dispose();
     _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -98,6 +112,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   // Handle registration submission
   Future<void> _register() async {
     if (_registerFormKey.currentState!.validate()) {
+      if (!_agreeToTerms) {
+        _showErrorSnackBar('Please agree to the Terms and Privacy Policy');
+        return;
+      }
+
       if (_passwordController.text != _confirmPasswordController.text) {
         _showErrorSnackBar('Passwords do not match');
         return;
@@ -123,7 +142,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.red.shade800,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
     );
   }
@@ -132,112 +156,315 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: ResponsiveContainer(
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              // App Logo/Branding
-              SizedBox(
-                height: 100,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.bookmark_border,
-                        size: 48,
-                        color: theme.primaryColor,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'LinkVault',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.primaryColor,
-                        ),
-                      ),
-                    ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.05),
+              theme.colorScheme.secondary.withOpacity(0.1),
+            ],
+          ),
+        ),
+        child: ResponsiveContainer(
+          child: SafeArea(
+            child: Stack(
+              children: [
+                // Background decorative elements
+                Positioned(
+                  top: -50,
+                  right: -50,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              // Tab Bar for switching between login and register
-              TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Login'),
-                  Tab(text: 'Register'),
-                ],
-                labelColor: theme.primaryColor,
-                indicatorColor: theme.primaryColor,
-                dividerColor: Colors.transparent,
-                unselectedLabelColor: Colors.grey,
-              ),
-              const SizedBox(height: 20),
-              // Tab content for login and register forms
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildLoginForm(authState),
-                    _buildRegisterForm(authState),
-                  ],
+                Positioned(
+                  bottom: -80,
+                  left: -80,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                // Main content
+                SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 40),
+                        // App Logo/Branding
+                        FadeInDown(
+                          duration: const Duration(milliseconds: 600),
+                          child: _buildLogo(theme),
+                        ),
+                        const SizedBox(height: 40),
+                        // Card for authentication forms
+                        FadeInUp(
+                          duration: const Duration(milliseconds: 600),
+                          delay: const Duration(milliseconds: 300),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: BackdropFilter(
+                                filter:
+                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  padding: const EdgeInsets.only(
+                                    top: 20,
+                                    bottom: 24,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surface
+                                        .withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.2),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // Tab Bar for switching between login and register
+                                      Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.surfaceVariant
+                                              .withOpacity(0.3),
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                        ),
+                                        child: TabBar(
+                                          controller: _tabController,
+                                          tabs: [
+                                            Tab(
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 16,
+                                                  vertical: 8,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(50),
+                                                  color: _isLogin
+                                                      ? theme
+                                                          .colorScheme.primary
+                                                      : Colors.transparent,
+                                                ),
+                                                child: Text(
+                                                  'Login',
+                                                  style: TextStyle(
+                                                    color: _isLogin
+                                                        ? theme.colorScheme
+                                                            .onPrimary
+                                                        : theme.colorScheme
+                                                            .onSurfaceVariant,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Tab(
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 16,
+                                                  vertical: 8,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(50),
+                                                  color: !_isLogin
+                                                      ? theme
+                                                          .colorScheme.primary
+                                                      : Colors.transparent,
+                                                ),
+                                                child: Text(
+                                                  'Register',
+                                                  style: TextStyle(
+                                                    color: !_isLogin
+                                                        ? theme.colorScheme
+                                                            .onPrimary
+                                                        : theme.colorScheme
+                                                            .onSurfaceVariant,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          dividerColor: Colors.transparent,
+                                          indicatorColor: Colors.transparent,
+                                          unselectedLabelColor: theme
+                                              .colorScheme.onSurfaceVariant,
+                                          labelColor:
+                                              theme.colorScheme.onPrimary,
+                                          labelPadding: EdgeInsets.zero,
+                                          padding: EdgeInsets.zero,
+                                          onTap: (index) {
+                                            // Tab controller listener will handle this
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      // Page view for form content
+                                      SizedBox(
+                                        height: _isLogin ? 450 : 600,
+                                        child: PageView(
+                                          controller: _pageController,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          children: [
+                                            _buildLoginForm(authState, theme),
+                                            _buildRegisterForm(
+                                                authState, theme),
+                                          ],
+                                          onPageChanged: (index) {
+                                            setState(() {
+                                              _isLogin = index == 0;
+                                              if (_tabController.index !=
+                                                  index) {
+                                                _tabController.animateTo(index);
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // App version
+                        Text(
+                          'LinkVault v1.0.0',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color:
+                                theme.colorScheme.onBackground.withOpacity(0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildLogo(ThemeData theme) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.bookmark,
+              size: 40,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'LinkVault',
+          style: GoogleFonts.poppins(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Organize your bookmarks seamlessly',
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            color: theme.colorScheme.onBackground.withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
   // Login form
-  Widget _buildLoginForm(AuthState authState) {
+  Widget _buildLoginForm(AuthState authState, ThemeData theme) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const BouncingScrollPhysics(),
       child: Form(
         key: _loginFormKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Email field
-            TextFormField(
+            _buildTextField(
               controller: _emailController,
+              label: 'Email',
+              hint: 'your.email@example.com',
+              icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
               validator: FormValidators.emailValidator,
-              textInputAction: TextInputAction.next,
+              theme: theme,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             // Password field
-            TextFormField(
+            _buildTextField(
               controller: _passwordController,
+              label: 'Password',
+              hint: '••••••••',
+              icon: Icons.lock_outline,
               obscureText: _obscurePassword,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                ),
-              ),
+              toggleObscureText: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
               validator: FormValidators.passwordValidator,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _login(),
+              theme: theme,
             ),
             const SizedBox(height: 8),
             // Forgot password link
@@ -247,63 +474,83 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 onPressed: () {
                   // Implement forgot password functionality
                 },
-                child: const Text('Forgot Password?'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: theme.colorScheme.primary,
+                ),
+                child: Text(
+                  'Forgot Password?',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             // Login button
-            ElevatedButton(
+            _buildPrimaryButton(
               onPressed: authState.isLoading ? null : _login,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: authState.isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text('Login'),
+              label: 'Login',
+              isLoading: authState.isLoading,
+              theme: theme,
             ),
             const SizedBox(height: 24),
             // OR divider
-            const Row(
+            Row(
               children: [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('OR', style: TextStyle(color: Colors.grey)),
+                Expanded(
+                  child: Divider(
+                    color: theme.colorScheme.onBackground.withOpacity(0.2),
+                  ),
                 ),
-                Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'OR CONTINUE WITH',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onBackground.withOpacity(0.5),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: theme.colorScheme.onBackground.withOpacity(0.2),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
             // Social login buttons
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                IconButton(
+                _buildSocialButton(
                   onPressed: () {
                     // Implement Google login
                   },
-                  icon: Icon(
-                    Icons.g_mobiledata,
-                    size: 36,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  icon: 'assets/icons/google.svg',
+                  label: 'Google',
+                  theme: theme,
                 ),
-                const SizedBox(width: 32),
-                IconButton(
+                _buildSocialButton(
                   onPressed: () {
                     // Implement Facebook login
                   },
-                  icon: Icon(
-                    Icons.facebook,
-                    size: 36,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  icon: 'assets/icons/facebook.svg',
+                  label: 'Facebook',
+                  theme: theme,
+                ),
+                _buildSocialButton(
+                  onPressed: () {
+                    // Implement Apple login
+                  },
+                  icon: 'assets/icons/apple.svg',
+                  label: 'Apple',
+                  theme: theme,
                 ),
               ],
             ),
@@ -314,9 +561,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   }
 
   // Registration form
-  Widget _buildRegisterForm(AuthState authState) {
+  Widget _buildRegisterForm(AuthState authState, ThemeData theme) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const BouncingScrollPhysics(),
       child: Form(
         key: _registerFormKey,
         child: Column(
@@ -328,16 +576,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 onTap: _pickImage,
                 child: Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey[300],
-                      backgroundImage:
-                          _avatarFile != null ? FileImage(_avatarFile!) : null,
+                    Container(
+                      height: 100,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceVariant,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                        image: _avatarFile != null
+                            ? DecorationImage(
+                                image: FileImage(_avatarFile!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
                       child: _avatarFile == null
-                          ? const Icon(
+                          ? Icon(
                               Icons.person,
                               size: 50,
-                              color: Colors.grey,
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withOpacity(0.5),
                             )
                           : null,
                     ),
@@ -345,10 +609,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
+                          color: theme.colorScheme.primary,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: const Icon(
                           Icons.camera_alt,
@@ -363,113 +634,296 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             ),
             const SizedBox(height: 24),
             // Name field
-            TextFormField(
+            _buildTextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
-                prefixIcon: Icon(Icons.person_outline),
-              ),
+              label: 'Full Name',
+              hint: 'John Doe',
+              icon: Icons.person_outline,
               validator: FormValidators.nameValidator,
-              textInputAction: TextInputAction.next,
+              theme: theme,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             // Email field
-            TextFormField(
+            _buildTextField(
               controller: _emailController,
+              label: 'Email',
+              hint: 'your.email@example.com',
+              icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
               validator: FormValidators.emailValidator,
-              textInputAction: TextInputAction.next,
+              theme: theme,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             // Password field
-            TextFormField(
+            _buildTextField(
               controller: _passwordController,
+              label: 'Password',
+              hint: '••••••••',
+              icon: Icons.lock_outline,
               obscureText: _obscurePassword,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                ),
-              ),
+              toggleObscureText: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
               validator: FormValidators.passwordValidator,
-              textInputAction: TextInputAction.next,
+              theme: theme,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             // Confirm Password field
-            TextFormField(
+            _buildTextField(
               controller: _confirmPasswordController,
+              label: 'Confirm Password',
+              hint: '••••••••',
+              icon: Icons.lock_outline,
               obscureText: _obscureConfirmPassword,
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                    });
-                  },
-                ),
-              ),
+              toggleObscureText: () {
+                setState(() {
+                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                });
+              },
               validator: FormValidators.passwordValidator,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _register(),
+              theme: theme,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             // Terms and conditions checkbox
-            Row(
-              children: [
-                Checkbox(
-                  value: true,
-                  onChanged: (value) {
-                    // Implement terms checkbox
-                  },
-                ),
-                Expanded(
-                  child: Text(
-                    'I agree to the Terms of Service and Privacy Policy',
-                    style: Theme.of(context).textTheme.bodySmall,
+            Theme(
+              data: Theme.of(context).copyWith(
+                checkboxTheme: CheckboxThemeData(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // Register button
-            ElevatedButton(
-              onPressed: authState.isLoading ? null : _register,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: authState.isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
+              child: CheckboxListTile(
+                value: _agreeToTerms,
+                onChanged: (value) {
+                  setState(() {
+                    _agreeToTerms = value ?? false;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onBackground,
+                    ),
+                    children: [
+                      const TextSpan(text: 'I agree to the '),
+                      TextSpan(
+                        text: 'Terms of Service',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    )
-                  : const Text('Create Account'),
+                      const TextSpan(text: ' and '),
+                      TextSpan(
+                        text: 'Privacy Policy',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Register button
+            _buildPrimaryButton(
+              onPressed: authState.isLoading ? null : _register,
+              label: 'Create Account',
+              isLoading: authState.isLoading,
+              theme: theme,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Common TextField widget
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required ThemeData theme,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+    VoidCallback? toggleObscureText,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onBackground,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          style: TextStyle(
+            fontSize: 16,
+            color: theme.colorScheme.onBackground,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: theme.colorScheme.onBackground.withOpacity(0.5),
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: theme.colorScheme.primary,
+              size: 20,
+            ),
+            suffixIcon: toggleObscureText != null
+                ? IconButton(
+                    icon: Icon(
+                      obscureText
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      size: 20,
+                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                    ),
+                    onPressed: toggleObscureText,
+                  )
+                : null,
+            filled: true,
+            fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: theme.colorScheme.outline.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: theme.colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: theme.colorScheme.error,
+                width: 1,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: theme.colorScheme.error,
+                width: 2,
+              ),
+            ),
+          ),
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
+  // Primary button widget
+  Widget _buildPrimaryButton({
+    required VoidCallback? onPressed,
+    required String label,
+    required bool isLoading,
+    required ThemeData theme,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 4,
+        shadowColor: theme.colorScheme.primary.withOpacity(0.4),
+      ),
+      child: isLoading
+          ? SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: theme.colorScheme.onPrimary,
+              ),
+            )
+          : Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+    );
+  }
+
+  // Social login button
+  Widget _buildSocialButton({
+    required VoidCallback onPressed,
+    required String icon,
+    required String label,
+    required ThemeData theme,
+  }) {
+    bool useIconFallback =
+        true; // Toggle to true if SVG assets aren't available
+
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        elevation: 0,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Use icon fallback if SVG assets aren't available
+          if (useIconFallback)
+            Icon(
+              label == 'Google'
+                  ? Icons.g_mobiledata
+                  : label == 'Facebook'
+                      ? Icons.facebook
+                      : Icons.apple,
+              size: 24,
+              color: theme.colorScheme.primary,
+            )
+        ],
       ),
     );
   }

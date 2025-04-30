@@ -6,10 +6,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:linkvault/providers/auth_provider.dart';
 import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/utils/form_validator.dart';
+import 'package:linkvault/widgets/build_primary_button.dart';
 import 'package:linkvault/widgets/responsive_container.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:linkvault/widgets/social_button.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -489,12 +491,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             ),
             const SizedBox(height: 32),
             // Login button
-            _buildPrimaryButton(
-              onPressed: authState.isLoading ? null : _login,
-              label: 'Login',
-              isLoading: authState.isLoading,
-              theme: theme,
-            ),
+            buildPrimaryButton(
+                onPressed: authState.isLoading ? null : _login,
+                label: 'Login',
+                isLoading: authState.isLoading,
+                theme: theme),
             const SizedBox(height: 24),
             // OR divider
             Row(
@@ -528,30 +529,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildSocialButton(
-                  onPressed: () {
-                    // Implement Google login
-                  },
-                  icon: 'assets/icons/google.svg',
-                  label: 'Google',
-                  theme: theme,
-                ),
-                _buildSocialButton(
-                  onPressed: () {
-                    // Implement Facebook login
-                  },
-                  icon: 'assets/icons/facebook.svg',
-                  label: 'Facebook',
-                  theme: theme,
-                ),
-                _buildSocialButton(
-                  onPressed: () {
-                    // Implement Apple login
-                  },
-                  icon: 'assets/icons/apple.svg',
-                  label: 'Apple',
-                  theme: theme,
-                ),
+                SocialButton(
+                    onPressed: () {
+                      // Implement Google login
+                    },
+                    icon: 'assets/icons/google.svg',
+                    label: 'Google',
+                    theme: theme),
+                SocialButton(
+                    onPressed: () {
+                      // Implement Facebook login
+                    },
+                    icon: 'assets/icons/facebook.svg',
+                    label: 'Facebook',
+                    theme: theme),
+                SocialButton(
+                    onPressed: () {
+                      // Implement Apple login
+                    },
+                    icon: 'assets/icons/apple.svg',
+                    label: 'Apple',
+                    theme: theme),
               ],
             ),
           ],
@@ -735,12 +733,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             ),
             const SizedBox(height: 32),
             // Register button
-            _buildPrimaryButton(
-              onPressed: authState.isLoading ? null : _register,
-              label: 'Create Account',
-              isLoading: authState.isLoading,
-              theme: theme,
-            ),
+            buildPrimaryButton(
+                onPressed: authState.isLoading ? null : _register,
+                label: 'Create Account',
+                isLoading: authState.isLoading,
+                theme: theme),
           ],
         ),
       ),
@@ -843,88 +840,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           validator: validator,
         ),
       ],
-    );
-  }
-
-  // Primary button widget
-  Widget _buildPrimaryButton({
-    required VoidCallback? onPressed,
-    required String label,
-    required bool isLoading,
-    required ThemeData theme,
-  }) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        elevation: 4,
-        shadowColor: theme.colorScheme.primary.withOpacity(0.4),
-      ),
-      child: isLoading
-          ? SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: theme.colorScheme.onPrimary,
-              ),
-            )
-          : Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-    );
-  }
-
-  // Social login button
-  Widget _buildSocialButton({
-    required VoidCallback onPressed,
-    required String icon,
-    required String label,
-    required ThemeData theme,
-  }) {
-    bool useIconFallback =
-        true; // Toggle to true if SVG assets aren't available
-
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.onSurface,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: theme.colorScheme.outline.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        elevation: 0,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Use icon fallback if SVG assets aren't available
-          if (useIconFallback)
-            Icon(
-              label == 'Google'
-                  ? Icons.g_mobiledata
-                  : label == 'Facebook'
-                      ? Icons.facebook
-                      : Icons.apple,
-              size: 24,
-              color: theme.colorScheme.primary,
-            )
-        ],
-      ),
     );
   }
 }

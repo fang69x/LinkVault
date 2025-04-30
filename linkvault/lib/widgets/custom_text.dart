@@ -5,27 +5,27 @@ class CustomTextField extends StatelessWidget {
   final String label;
   final String hint;
   final IconData icon;
-  final ThemeData theme;
   final TextInputType keyboardType;
   final bool obscureText;
   final VoidCallback? toggleObscureText;
   final String? Function(String?)? validator;
 
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.label,
     required this.hint,
     required this.icon,
-    required this.theme,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     this.toggleObscureText,
     this.validator,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

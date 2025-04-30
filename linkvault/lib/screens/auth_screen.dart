@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkvault/providers/auth_provider.dart';
-import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/utils/form_validator.dart';
 import 'package:linkvault/widgets/build_primary_button.dart';
+import 'package:linkvault/widgets/logo_builder.dart';
 import 'package:linkvault/widgets/responsive_container.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:linkvault/widgets/social_button.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -22,9 +21,15 @@ class AuthScreen extends ConsumerStatefulWidget {
 
 class _AuthScreenState extends ConsumerState<AuthScreen>
     with SingleTickerProviderStateMixin {
-  // Form controllers
+  // Controllers
+  late final TabController _tabController;
+  final PageController _pageController = PageController();
+
+  // Form keys
   final _loginFormKey = GlobalKey<FormState>();
   final _registerFormKey = GlobalKey<FormState>();
+
+  // Text controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
@@ -34,43 +39,49 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLogin = true;
-  File? _avatarFile;
   bool _agreeToTerms = true;
-
-  // Animation controller for smooth transitions
-  late TabController _tabController;
-  final PageController _pageController = PageController();
+  File? _avatarFile;
 
   @override
   void initState() {
     super.initState();
+    _initTabController();
+  }
+
+  void _initTabController() {
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {
-          _isLogin = _tabController.index == 0;
-          _pageController.animateToPage(
-            _tabController.index,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        });
-      }
-    });
+    _tabController.addListener(_handleTabChange);
+  }
+
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      setState(() {
+        _isLogin = _tabController.index == 0;
+        _pageController.animateToPage(
+          _tabController.index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
   }
 
   @override
   void dispose() {
+    _disposeControllers();
+    super.dispose();
+  }
+
+  void _disposeControllers() {
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
     _confirmPasswordController.dispose();
     _tabController.dispose();
     _pageController.dispose();
-    super.dispose();
   }
 
-  // Pick avatar image from gallery
+  // Avatar handling
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
 
@@ -94,7 +105,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
-  // Handle login submission
+  // Authentication methods
   Future<void> _login() async {
     if (_loginFormKey.currentState!.validate()) {
       final notifier = ref.read(authNotifierProvider.notifier);
@@ -111,7 +122,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
-  // Handle registration submission
   Future<void> _register() async {
     if (_registerFormKey.currentState!.validate()) {
       if (!_agreeToTerms) {
@@ -140,6 +150,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
+  // UI Feedback
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -158,7 +169,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       body: Container(
@@ -176,211 +186,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           child: SafeArea(
             child: Stack(
               children: [
-                // Background decorative elements
-                Positioned(
-                  top: -50,
-                  right: -50,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -80,
-                  left: -80,
-                  child: Container(
-                    width: 300,
-                    height: 300,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-                // Main content
-                SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 40),
-                        // App Logo/Branding
-                        FadeInDown(
-                          duration: const Duration(milliseconds: 600),
-                          child: _buildLogo(theme),
-                        ),
-                        const SizedBox(height: 40),
-                        // Card for authentication forms
-                        FadeInUp(
-                          duration: const Duration(milliseconds: 600),
-                          delay: const Duration(milliseconds: 300),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: BackdropFilter(
-                                filter:
-                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Container(
-                                  padding: const EdgeInsets.only(
-                                    top: 20,
-                                    bottom: 24,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.surface
-                                        .withOpacity(0.8),
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.2),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      // Tab Bar for switching between login and register
-                                      Container(
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        decoration: BoxDecoration(
-                                          color: theme
-                                              .colorScheme.surfaceVariant
-                                              .withOpacity(0.3),
-                                          borderRadius:
-                                              BorderRadius.circular(50),
-                                        ),
-                                        child: TabBar(
-                                          controller: _tabController,
-                                          tabs: [
-                                            Tab(
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 8,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(50),
-                                                  color: _isLogin
-                                                      ? theme
-                                                          .colorScheme.primary
-                                                      : Colors.transparent,
-                                                ),
-                                                child: Text(
-                                                  'Login',
-                                                  style: TextStyle(
-                                                    color: _isLogin
-                                                        ? theme.colorScheme
-                                                            .onPrimary
-                                                        : theme.colorScheme
-                                                            .onSurfaceVariant,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Tab(
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 8,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(50),
-                                                  color: !_isLogin
-                                                      ? theme
-                                                          .colorScheme.primary
-                                                      : Colors.transparent,
-                                                ),
-                                                child: Text(
-                                                  'Register',
-                                                  style: TextStyle(
-                                                    color: !_isLogin
-                                                        ? theme.colorScheme
-                                                            .onPrimary
-                                                        : theme.colorScheme
-                                                            .onSurfaceVariant,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                          dividerColor: Colors.transparent,
-                                          indicatorColor: Colors.transparent,
-                                          unselectedLabelColor: theme
-                                              .colorScheme.onSurfaceVariant,
-                                          labelColor:
-                                              theme.colorScheme.onPrimary,
-                                          labelPadding: EdgeInsets.zero,
-                                          padding: EdgeInsets.zero,
-                                          onTap: (index) {
-                                            // Tab controller listener will handle this
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      // Page view for form content
-                                      SizedBox(
-                                        height: _isLogin ? 450 : 600,
-                                        child: PageView(
-                                          controller: _pageController,
-                                          physics:
-                                              const NeverScrollableScrollPhysics(),
-                                          children: [
-                                            _buildLoginForm(authState, theme),
-                                            _buildRegisterForm(
-                                                authState, theme),
-                                          ],
-                                          onPageChanged: (index) {
-                                            setState(() {
-                                              _isLogin = index == 0;
-                                              if (_tabController.index !=
-                                                  index) {
-                                                _tabController.animateTo(index);
-                                              }
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // App version
-                        Text(
-                          'LinkVault v1.0.0',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color:
-                                theme.colorScheme.onBackground.withOpacity(0.6),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildBackgroundElements(theme),
+                _buildMainContent(authState, theme),
               ],
             ),
           ),
@@ -389,46 +196,194 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
   }
 
-  Widget _buildLogo(ThemeData theme) {
-    return Column(
+  // Background decorative elements
+  Widget _buildBackgroundElements(ThemeData theme) {
+    return Stack(
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
+        Positioned(
+          top: -50,
+          right: -50,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            width: 200,
+            height: 200,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.3),
+              color: theme.colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.bookmark,
-              size: 40,
-              color: theme.colorScheme.primary,
+          ),
+        ),
+        Positioned(
+          bottom: -80,
+          left: -80,
+          child: Container(
+            width: 300,
+            height: 300,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondary.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'LinkVault',
-          style: GoogleFonts.poppins(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Organize your bookmarks seamlessly',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            color: theme.colorScheme.onBackground.withOpacity(0.7),
           ),
         ),
       ],
+    );
+  }
+
+  // Main content area
+  Widget _buildMainContent(AuthState authState, ThemeData theme) {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            _buildLogo(theme),
+            const SizedBox(height: 40),
+            _buildAuthCard(authState, theme),
+            const SizedBox(height: 24),
+            _buildAppVersion(theme),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Logo widget
+  Widget _buildLogo(ThemeData theme) {
+    return FadeInDown(
+      duration: const Duration(milliseconds: 600),
+      child: LogoBuilder(theme: theme),
+    );
+  }
+
+  // App version text
+  Widget _buildAppVersion(ThemeData theme) {
+    return Text(
+      'LinkVault v1.0.0',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onBackground.withOpacity(0.6),
+      ),
+    );
+  }
+
+  // Authentication card with forms
+  Widget _buildAuthCard(AuthState authState, ThemeData theme) {
+    return FadeInUp(
+      duration: const Duration(milliseconds: 600),
+      delay: const Duration(milliseconds: 300),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.only(
+                top: 20,
+                bottom: 24,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  _buildTabBar(theme),
+                  const SizedBox(height: 24),
+                  _buildFormPageView(authState, theme),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Tab bar for login/register
+  Widget _buildTabBar(ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        tabs: [
+          _buildTabItem('Login', _isLogin, theme),
+          _buildTabItem('Register', !_isLogin, theme),
+        ],
+        dividerColor: Colors.transparent,
+        indicatorColor: Colors.transparent,
+        unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+        labelColor: theme.colorScheme.onPrimary,
+        labelPadding: EdgeInsets.zero,
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  // Individual tab item
+  Widget _buildTabItem(String label, bool isActive, ThemeData theme) {
+    return Tab(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(50),
+          color: isActive ? theme.colorScheme.primary : Colors.transparent,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Page view for forms
+  Widget _buildFormPageView(AuthState authState, ThemeData theme) {
+    return SizedBox(
+      height: _isLogin ? 450 : 600,
+      child: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          _buildLoginForm(authState, theme),
+          _buildRegisterForm(authState, theme),
+        ],
+        onPageChanged: (index) {
+          setState(() {
+            _isLogin = index == 0;
+            if (_tabController.index != index) {
+              _tabController.animateTo(index);
+            }
+          });
+        },
+      ),
     );
   }
 
@@ -442,7 +397,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Email field
             _buildTextField(
               controller: _emailController,
               label: 'Email',
@@ -453,7 +407,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               theme: theme,
             ),
             const SizedBox(height: 20),
-            // Password field
             _buildTextField(
               controller: _passwordController,
               label: 'Password',
@@ -469,92 +422,107 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               theme: theme,
             ),
             const SizedBox(height: 8),
-            // Forgot password link
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  // Implement forgot password functionality
-                },
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  foregroundColor: theme.colorScheme.primary,
-                ),
-                child: Text(
-                  'Forgot Password?',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
+            _buildForgotPasswordLink(theme),
             const SizedBox(height: 32),
-            // Login button
             buildPrimaryButton(
-                onPressed: authState.isLoading ? null : _login,
-                label: 'Login',
-                isLoading: authState.isLoading,
-                theme: theme),
-            const SizedBox(height: 24),
-            // OR divider
-            Row(
-              children: [
-                Expanded(
-                  child: Divider(
-                    color: theme.colorScheme.onBackground.withOpacity(0.2),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'OR CONTINUE WITH',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onBackground.withOpacity(0.5),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Divider(
-                    color: theme.colorScheme.onBackground.withOpacity(0.2),
-                  ),
-                ),
-              ],
+              onPressed: authState.isLoading ? null : _login,
+              label: 'Login',
+              isLoading: authState.isLoading,
+              theme: theme,
             ),
             const SizedBox(height: 24),
-            // Social login buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                SocialButton(
-                    onPressed: () {
-                      // Implement Google login
-                    },
-                    icon: 'assets/icons/google.svg',
-                    label: 'Google',
-                    theme: theme),
-                SocialButton(
-                    onPressed: () {
-                      // Implement Facebook login
-                    },
-                    icon: 'assets/icons/facebook.svg',
-                    label: 'Facebook',
-                    theme: theme),
-                SocialButton(
-                    onPressed: () {
-                      // Implement Apple login
-                    },
-                    icon: 'assets/icons/apple.svg',
-                    label: 'Apple',
-                    theme: theme),
-              ],
-            ),
+            _buildDivider(theme),
+            const SizedBox(height: 24),
+            _buildSocialLoginButtons(theme),
           ],
         ),
       ),
+    );
+  }
+
+  // Forgot password link
+  Widget _buildForgotPasswordLink(ThemeData theme) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: () {
+          // Implement forgot password functionality
+        },
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.compact,
+          foregroundColor: theme.colorScheme.primary,
+        ),
+        child: const Text(
+          'Forgot Password?',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // OR divider
+  Widget _buildDivider(ThemeData theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            color: theme.colorScheme.onBackground.withOpacity(0.2),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'OR CONTINUE WITH',
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onBackground.withOpacity(0.5),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            color: theme.colorScheme.onBackground.withOpacity(0.2),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Social login buttons
+  Widget _buildSocialLoginButtons(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        SocialButton(
+          onPressed: () {
+            // Implement Google login
+          },
+          icon: 'assets/icons/google.svg',
+          label: 'Google',
+          theme: theme,
+        ),
+        SocialButton(
+          onPressed: () {
+            // Implement Facebook login
+          },
+          icon: 'assets/icons/facebook.svg',
+          label: 'Facebook',
+          theme: theme,
+        ),
+        SocialButton(
+          onPressed: () {
+            // Implement Apple login
+          },
+          icon: 'assets/icons/apple.svg',
+          label: 'Apple',
+          theme: theme,
+        ),
+      ],
     );
   }
 
@@ -568,70 +536,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Avatar picker
-            Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: Stack(
-                  children: [
-                    Container(
-                      height: 100,
-                      width: 100,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                        image: _avatarFile != null
-                            ? DecorationImage(
-                                image: FileImage(_avatarFile!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: _avatarFile == null
-                          ? Icon(
-                              Icons.person,
-                              size: 50,
-                              color: theme.colorScheme.onSurfaceVariant
-                                  .withOpacity(0.5),
-                            )
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildAvatarPicker(theme),
             const SizedBox(height: 24),
-            // Name field
             _buildTextField(
               controller: _nameController,
               label: 'Full Name',
@@ -641,7 +547,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               theme: theme,
             ),
             const SizedBox(height: 20),
-            // Email field
             _buildTextField(
               controller: _emailController,
               label: 'Email',
@@ -652,7 +557,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               theme: theme,
             ),
             const SizedBox(height: 20),
-            // Password field
             _buildTextField(
               controller: _passwordController,
               label: 'Password',
@@ -668,7 +572,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               theme: theme,
             ),
             const SizedBox(height: 20),
-            // Confirm Password field
             _buildTextField(
               controller: _confirmPasswordController,
               label: 'Confirm Password',
@@ -684,61 +587,130 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               theme: theme,
             ),
             const SizedBox(height: 20),
-            // Terms and conditions checkbox
-            Theme(
-              data: Theme.of(context).copyWith(
-                checkboxTheme: CheckboxThemeData(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+            _buildTermsCheckbox(theme),
+            const SizedBox(height: 32),
+            buildPrimaryButton(
+              onPressed: authState.isLoading ? null : _register,
+              label: 'Create Account',
+              isLoading: authState.isLoading,
+              theme: theme,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Avatar picker
+  Widget _buildAvatarPicker(ThemeData theme) {
+    return Center(
+      child: GestureDetector(
+        onTap: _pickImage,
+        child: Stack(
+          children: [
+            Container(
+              height: 100,
+              width: 100,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
                   ),
-                ),
+                ],
+                image: _avatarFile != null
+                    ? DecorationImage(
+                        image: FileImage(_avatarFile!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: CheckboxListTile(
-                value: _agreeToTerms,
-                onChanged: (value) {
-                  setState(() {
-                    _agreeToTerms = value ?? false;
-                  });
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                title: RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: theme.colorScheme.onBackground,
+              child: _avatarFile == null
+                  ? Icon(
+                      Icons.person,
+                      size: 50,
+                      color:
+                          theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    )
+                  : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
-                    children: [
-                      const TextSpan(text: 'I agree to the '),
-                      TextSpan(
-                        text: 'Terms of Service',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const TextSpan(text: ' and '),
-                      TextSpan(
-                        text: 'Privacy Policy',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  size: 20,
+                  color: Colors.white,
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-            // Register button
-            buildPrimaryButton(
-                onPressed: authState.isLoading ? null : _register,
-                label: 'Create Account',
-                isLoading: authState.isLoading,
-                theme: theme),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Terms and conditions checkbox
+  Widget _buildTermsCheckbox(ThemeData theme) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        checkboxTheme: CheckboxThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+      child: CheckboxListTile(
+        value: _agreeToTerms,
+        onChanged: (value) {
+          setState(() {
+            _agreeToTerms = value ?? false;
+          });
+        },
+        controlAffinity: ListTileControlAffinity.leading,
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        title: RichText(
+          text: TextSpan(
+            style: TextStyle(
+              fontSize: 14,
+              color: theme.colorScheme.onBackground,
+            ),
+            children: [
+              const TextSpan(text: 'I agree to the '),
+              TextSpan(
+                text: 'Terms of Service',
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const TextSpan(text: ' and '),
+              TextSpan(
+                text: 'Privacy Policy',
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

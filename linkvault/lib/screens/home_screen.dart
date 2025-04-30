@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:linkvault/models/bookmark_model.dart';
 import 'package:linkvault/providers/auth_provider.dart';
 import 'package:linkvault/providers/bookmark_provider.dart';
+import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/utils/theme.dart';
 import 'package:linkvault/widgets/bookmark_card.dart';
 import 'package:linkvault/widgets/responsive_container.dart';
@@ -61,7 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () => context.push('/search'),
+            onPressed: () => context.go(AppRoutes.search),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -167,7 +168,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       final bookmark = bookmarkState.bookmarks[index];
                       return BookmarkCard(
                         bookmark: bookmark,
-                        onTap: () => context.push('/bookmark/${bookmark.id}'),
+                        onTap: () => context.go(
+                          AppRoutes.bookmarkDetails
+                              .replaceAll(':id', bookmark.id!),
+                        ),
                         onDelete: () async {
                           await ref
                               .read(bookmarkNotifierProvider.notifier)
@@ -184,9 +188,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/bookmark/create'),
-        child: const Icon(Icons.add),
+        onPressed: () => context.go(AppRoutes.createBookmark),
         tooltip: 'Add Bookmark',
+        child: const Icon(Icons.add),
       ),
     );
   }

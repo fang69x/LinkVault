@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:linkvault/models/bookmark_model.dart';
 import 'package:linkvault/providers/bookmark_provider.dart';
+import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/utils/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -104,9 +106,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.pushNamed(context, '/create-bookmark');
-            },
+            onPressed: () => context.go(AppRoutes.createBookmark),
           )
         ],
       ),

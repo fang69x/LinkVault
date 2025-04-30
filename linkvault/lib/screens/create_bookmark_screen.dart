@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:linkvault/models/bookmark_model.dart';
 import 'package:linkvault/providers/auth_provider.dart';
 import 'package:linkvault/providers/bookmark_provider.dart';
+import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/services/api_services.dart';
 import 'package:linkvault/services/auth_services.dart';
 import 'package:linkvault/utils/theme.dart';
@@ -102,7 +104,8 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
       final user = ref.read(authNotifierProvider).user;
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User is not logged in. Please login again.')),
+          const SnackBar(
+              content: Text('User is not logged in. Please login again.')),
         );
         return;
       }
@@ -126,14 +129,19 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
             .read(bookmarkNotifierProvider.notifier)
             .updateBookmark(widget.bookmark!.id!, bookmark);
       } else {
+        // Await both operations
         await ref
             .read(bookmarkNotifierProvider.notifier)
             .createBookmark(bookmark);
-        ref.read(bookmarkNotifierProvider.notifier).getBookmarks(refresh: true);
+        await ref
+            .read(bookmarkNotifierProvider.notifier)
+            .getBookmarks(refresh: true);
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        // Force a small delay for state propagation
+        await Future.delayed(const Duration(milliseconds: 100));
+        context.go(AppRoutes.home);
       }
     } catch (e) {
       if (mounted) {
@@ -239,7 +247,8 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
                       label: Text(tag),
                       onDeleted: () => _removeTag(tag),
                       backgroundColor: AppTheme.accentColor.withOpacity(0.2),
-                      labelStyle: TextStyle(color: AppTheme.textPrimaryColor),
+                      labelStyle:
+                          const TextStyle(color: AppTheme.textPrimaryColor),
                       deleteIconColor: AppTheme.primaryColor,
                     );
                   }).toList(),
@@ -259,9 +268,9 @@ class _CreateBookmarkScreenState extends ConsumerState<CreateBookmarkScreen> {
             ElevatedButton(
               onPressed: isSubmitting ? null : _saveBookmark,
               child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 200),
                 child: isSubmitting
-                    ? CircularProgressIndicator(color: Colors.white)
+                    ? const CircularProgressIndicator(color: Colors.white)
                     : Text(_isEditMode ? 'Update Bookmark' : 'Save Bookmark'),
               ),
             )

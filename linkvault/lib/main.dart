@@ -1,41 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:linkvault/services/connectivity_services.dart';
-import 'package:linkvault/utils/theme.dart';
 import 'package:linkvault/routes/app_routes.dart';
+import 'package:linkvault/routes/go_router.dart';
+import 'package:linkvault/utils/logger.dart';
+import 'package:linkvault/utils/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services
-  await ConnectivityService.initialize();
-
-  final container = ProviderContainer();
+  // Initialize any services here
 
   runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const MyApp(),
+    const ProviderScope(
+      child: LinkVaultApp(),
     ),
   );
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class LinkVaultApp extends ConsumerWidget {
+  const LinkVaultApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
-
+    final goRouter = ref.watch(goRouterProvider);
     return MaterialApp.router(
-      title: 'LinkVault',
+      routerConfig: goRouter,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      routerDelegate: router.routerDelegate,
-      routeInformationParser: router.routeInformationParser,
-      routeInformationProvider: router.routeInformationProvider,
     );
   }
 }

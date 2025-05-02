@@ -793,37 +793,53 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 // Custom wave painter for app bar bottom edge
 class _WavePainter extends CustomPainter {
   final Color color;
+  final double amplitude;
+  final double phase;
 
-  _WavePainter({required this.color});
+  _WavePainter({
+    required this.color,
+    this.amplitude = 10,
+    this.phase = 0,
+  });
+
+  Path _buildPath(Size size) {
+    final segments = 40;
+    final dx = size.width / segments;
+    final path = Path()..moveTo(0, size.height);
+
+    for (var i = 0; i < segments; i++) {
+      final x0 = dx * i;
+      final x1 = dx * (i + 1);
+      final y0 = size.height -
+          amplitude * math.sin((x0 / size.width) * 4 * math.pi + phase);
+      final y1 = size.height -
+          amplitude * math.sin((x1 / size.width) * 4 * math.pi + phase);
+      final midX = (x0 + x1) / 2;
+      final midY = (y0 + y1) / 2;
+      path.quadraticBezierTo(x0, y0, midX, midY);
+    }
+
+    path.lineTo(size.width, size.height);
+    path.close();
+    return path;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
+    final path = _buildPath(size);
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-
-    final path = Path();
-
-    // Start from the left edge
-    path.moveTo(0, size.height);
-
-    // Draw a wavy line from left to right
-    for (int i = 0; i < size.width.toInt(); i++) {
-      final x = i.toDouble();
-      // Use sine function to create wave effect
-      final y = size.height - 10 * math.sin((x / size.width) * 4 * math.pi);
-      path.lineTo(x, y);
-    }
-
-    // Complete the path by connecting to bottom right and back to start
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
 
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _WavePainter old) {
+    return old.color != color ||
+        old.phase != phase ||
+        old.amplitude != amplitude;
+  }
 }
 
 // Empty State Widget

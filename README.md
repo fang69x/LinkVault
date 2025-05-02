@@ -2,7 +2,7 @@
 A full-stack smart bookmark manager with secure auth, search, tagging, avatar uploads, and a clean Flutter Web interface.
 
 ## 🌐 Live Demo
-👉 [LinkVault Web App](https://link-vault-avfk09q52-fang69xs-projects.vercel.app/)
+👉 [LinkVault Web App](https://link-vault-blue.vercel.app/)
 
 ## 🚀 Features
 - JWT-based authentication with user-specific bookmark storage

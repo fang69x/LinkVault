@@ -10,6 +10,7 @@ import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/utils/constants.dart';
 import 'package:linkvault/utils/theme.dart';
 import 'package:linkvault/widgets/bookmark_card.dart';
+import 'package:linkvault/widgets/homeScreen_widget/_SliverAppBarDelegate.dart';
 import 'package:linkvault/widgets/homeScreen_widget/wavePainter.dart';
 import 'package:linkvault/widgets/shimmer.dart';
 
@@ -545,7 +546,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             // Category tabs
             SliverPersistentHeader(
               pinned: true,
-              delegate: _SliverAppBarDelegate(
+              delegate: SliverAppBarDelegate(
                 TabBar(
                   controller: _tabController,
                   isScrollable: true,
@@ -748,46 +749,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             curve: Curves.elasticOut,
           ),
     );
-  }
-}
-
-// Delegate for persistent header
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
-
-  final TabBar _tabBar;
-
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
-  @override
-  double get maxExtent => _tabBar.preferredSize.height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        boxShadow: overlapsContent
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
-      child: _tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
   }
 }
 

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:linkvault/routes/app_routes.dart';
 import 'package:linkvault/routes/go_router.dart';
-import 'package:linkvault/utils/logger.dart';
 import 'package:linkvault/utils/theme.dart';
 
 void main() async {

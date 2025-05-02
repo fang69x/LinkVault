@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:linkvault/providers/auth_provider.dart';
 import 'package:linkvault/widgets/authHeader.dart';
-import 'package:linkvault/widgets/avatar_picker.dart';
 import 'package:linkvault/widgets/loginForm.dart';
 import 'package:linkvault/widgets/logo_builder.dart';
 import 'package:linkvault/widgets/registerForm.dart';
